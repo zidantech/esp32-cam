@@ -4,27 +4,7 @@
 
 const char* ssid = "UAS_CONNECT";
 const char* password = "uas@vtol";
-
-// Replace with your Render backend WebSocket URL
 const char* websocketServer = "wss://esp32-cam-kpjw.onrender.com";
-
-// Camera pin configuration
-#define PWDN_GPIO_NUM     32
-#define RESET_GPIO_NUM    -1
-#define XCLK_GPIO_NUM      0
-#define SIOD_GPIO_NUM     26
-#define SIOC_GPIO_NUM     27
-#define Y9_GPIO_NUM       35
-#define Y8_GPIO_NUM       34
-#define Y7_GPIO_NUM       39
-#define Y6_GPIO_NUM       36
-#define Y5_GPIO_NUM       21
-#define Y4_GPIO_NUM       19
-#define Y3_GPIO_NUM       18
-#define Y2_GPIO_NUM        5
-#define VSYNC_GPIO_NUM    25
-#define HREF_GPIO_NUM     23
-#define PCLK_GPIO_NUM     22
 
 WebSocketsClient webSocket;
 
@@ -51,7 +31,6 @@ void configCamera() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  // Reduce resolution and quality for faster transmission
   config.frame_size = FRAMESIZE_QVGA; // 320x240
   config.jpeg_quality = 10; // Lower quality for smaller file size
   config.fb_count = 1;
@@ -80,6 +59,23 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
   }
 }
 
+void reconnect() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected. Reconnecting...");
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("\nWiFi reconnected");
+  }
+
+  if (!webSocket.isConnected()) {
+    Serial.println("WebSocket disconnected. Reconnecting...");
+    webSocket.beginSSL("esp32-cam-kpjw.onrender.com", 443);
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
@@ -94,14 +90,18 @@ void setup() {
   configCamera();
 
   // Connect to WebSocket server
-  webSocket.beginSSL("esp32-cam-kpjw.onrender.com", 443); // Use SSL for secure connection
+  webSocket.beginSSL("esp32-cam-kpjw.onrender.com", 443);
   webSocket.onEvent(webSocketEvent);
 }
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED || !webSocket.isConnected()) {
+    reconnect();
+  }
+
   webSocket.loop();
 
-  if (WiFi.status() == WL_CONNECTED && webSocket.isConnected()) {
+  if (webSocket.isConnected()) {
     camera_fb_t* fb = esp_camera_fb_get();
     if (!fb) {
       Serial.println("Frame buffer could not be acquired");
@@ -111,10 +111,6 @@ void loop() {
     // Send the frame over WebSocket
     webSocket.sendBIN(fb->buf, fb->len);
     esp_camera_fb_return(fb);
-  } else {
-    Serial.println("WiFi or WebSocket disconnected. Reconnecting...");
-    WiFi.begin(ssid, password);
-    webSocket.beginSSL("esp32-cam-kpjw.onrender.com", 443);
   }
 
   delay(100); // Adjust delay for desired FPS
