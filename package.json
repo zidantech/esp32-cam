@@ -1,0 +1,33 @@
+{
+    "name": "esp32-cam",
+    "version": "1.0.0",
+    "description": "Backend server for ESP32-CAM live feed",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Your Name",
+    "license": "ISC",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/zidantech/esp32-cam.git"
+    },
+    "bugs": {
+      "url": "https://github.com/zidantech/esp32-cam/issues"
+    },
+    "homepage": "https://github.com/zidantech/esp32-cam#readme",
+    "keywords": [
+      "esp32-cam",
+      "live-feed",
+      "nodejs"
+    ],
+    "engines": {
+      "node": ">=18.0.0",
+      "npm": ">=9.0.0"
+    },
+    "dependencies": {
+      "body-parser": "^1.20.3",
+      "express": "^4.21.2"
+    }
+  }

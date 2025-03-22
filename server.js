@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 // Serve static files (e.g., HTML, CSS, JS)
 app.use(express.static('public'));
 
-// Endpoint to receive image data
+// Endpoint to receive image data from ESP32-CAM
 app.post('/upload', (req, res) => {
   const imageData = req.body.image; // Base64 encoded image
   if (!imageData) {
@@ -33,7 +33,7 @@ app.post('/upload', (req, res) => {
   });
 });
 
-// Endpoint to serve the latest image
+// Endpoint to serve the latest image to users
 app.get('/image', (req, res) => {
   const imagePath = path.join(__dirname, 'public', 'latest.jpg');
   res.sendFile(imagePath);
