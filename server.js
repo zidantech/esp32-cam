@@ -10,7 +10,7 @@ const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static files (e.g., HTML, CSS, JS)
+// Serve static files
 app.use(express.static('public'));
 
 // WebSocket connection handler
