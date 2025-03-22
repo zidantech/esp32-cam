@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware to handle raw image data
 app.use(bodyParser.raw({ type: 'image/jpeg', limit: '10mb' }));
@@ -14,8 +14,11 @@ app.use(express.static('public'));
 
 // Endpoint to receive image data from ESP32-CAM
 app.post('/upload', (req, res) => {
+  console.log('Received image data');
   const imageData = req.body; // Raw image data
-  if (!imageData) {
+
+  if (!imageData || imageData.length === 0) {
+    console.error('No image data received');
     return res.status(400).send('No image data received');
   }
 
@@ -34,6 +37,10 @@ app.post('/upload', (req, res) => {
 // Endpoint to serve the latest image to clients
 app.get('/image', (req, res) => {
   const imagePath = path.join(__dirname, 'public', 'latest.jpg');
+  if (!fs.existsSync(imagePath)) {
+    console.error('Image not found:', imagePath);
+    return res.status(404).send('Image not found');
+  }
   res.sendFile(imagePath);
 });
 
