@@ -25,11 +25,11 @@
 <body>
   <img id="liveImage" src="/image" alt="Live Feed">
   <script>
-    // Refresh the image every 2 seconds
+    // Refresh the image every 100ms for real-time streaming
     setInterval(() => {
       const img = document.getElementById('liveImage');
       img.src = `/image?t=${new Date().getTime()}`; // Add timestamp to avoid caching
-    }, 2000);
+    }, 100);
   </script>
 </body>
 </html>
