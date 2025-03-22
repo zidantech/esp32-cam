@@ -14,9 +14,11 @@ app.use(express.static('public'));
 
 // Endpoint to receive image data from ESP32-CAM
 app.post('/upload', (req, res) => {
+  console.log('Received image data');
   const imageData = req.body; // Raw image data
 
   if (!imageData || imageData.length === 0) {
+    console.error('No image data received');
     return res.status(400).send('No image data received');
   }
 
@@ -27,6 +29,7 @@ app.post('/upload', (req, res) => {
       console.error('Error saving image:', err);
       return res.status(500).send('Error saving image');
     }
+    console.log('Image saved successfully');
     res.status(200).send('Image received and saved');
   });
 });
@@ -35,6 +38,7 @@ app.post('/upload', (req, res) => {
 app.get('/image', (req, res) => {
   const imagePath = path.join(__dirname, 'public', 'latest.jpg');
   if (!fs.existsSync(imagePath)) {
+    console.error('Image not found:', imagePath);
     return res.status(404).send('Image not found');
   }
   res.sendFile(imagePath);
