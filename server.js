@@ -1,45 +1,47 @@
 const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
+const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
 const PORT = process.env.PORT || 3000;
 
-// Serve static files
+// Middleware to handle raw image data
+app.use(bodyParser.raw({ type: 'image/jpeg', limit: '10mb' }));
+
+// Serve static files (e.g., HTML, CSS, JS)
 app.use(express.static('public'));
 
-// WebSocket connection handler
-wss.on('connection', (ws) => {
-  console.log('Client connected');
+// Endpoint to receive image data from ESP32-CAM
+app.post('/upload', (req, res) => {
+  console.log('Received image data');
+  const imageData = req.body; // Raw image data
 
-  ws.on('message', (message) => {
-    console.log('Received image data');
-    const imageData = message; // Raw image data
+  if (!imageData || imageData.length === 0) {
+    console.error('No image data received');
+    return res.status(400).send('No image data received');
+  }
 
-    if (!imageData || imageData.length === 0) {
-      console.error('No image data received');
-      return;
+  // Save the image to a file
+  const imagePath = path.join(__dirname, 'public', 'latest.jpg');
+  fs.writeFile(imagePath, imageData, (err) => {
+    if (err) {
+      console.error('Error saving image:', err);
+      return res.status(500).send('Error saving image');
     }
-
-    // Save the image to a file
-    const imagePath = path.join(__dirname, 'public', 'latest.jpg');
-    fs.writeFile(imagePath, imageData, (err) => {
-      if (err) {
-        console.error('Error saving image:', err);
-        return;
-      }
-      console.log('Image saved successfully');
-    });
+    console.log('Image saved successfully');
+    res.status(200).send('Image received and saved');
   });
+});
 
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
+// Endpoint to serve the latest image to clients
+app.get('/image', (req, res) => {
+  const imagePath = path.join(__dirname, 'public', 'latest.jpg');
+  if (!fs.existsSync(imagePath)) {
+    console.error('Image not found:', imagePath);
+    return res.status(404).send('Image not found');
+  }
+  res.sendFile(imagePath);
 });
 
 // Serve the HTML page
@@ -48,6 +50,6 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
