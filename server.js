@@ -1,11 +1,14 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+const PORT = process.env.PORT || 3000;
 
 // Serve static files (e.g., HTML, CSS, JS)
 app.use(express.static('public'));
@@ -15,11 +18,22 @@ wss.on('connection', (ws) => {
   console.log('Client connected');
 
   ws.on('message', (message) => {
-    // Broadcast the received frame to all connected clients
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
+    console.log('Received image data');
+    const imageData = message; // Raw image data
+
+    if (!imageData || imageData.length === 0) {
+      console.error('No image data received');
+      return;
+    }
+
+    // Save the image to a file
+    const imagePath = path.join(__dirname, 'public', 'latest.jpg');
+    fs.writeFile(imagePath, imageData, (err) => {
+      if (err) {
+        console.error('Error saving image:', err);
+        return;
       }
+      console.log('Image saved successfully');
     });
   });
 
@@ -34,7 +48,6 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
