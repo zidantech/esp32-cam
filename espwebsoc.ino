@@ -5,8 +5,10 @@
 const char* ssid = "UAS_CONNECT";
 const char* password = "uas@vtol";
 
-// Replace with your WebSocket server URL
-const char* websocketServer = "wss://esp32-cam-kpjw.onrender.com";
+// Replace with your Render WebSocket URL
+const char* websocketServer = "esp32-cam-kpjw.onrender.com"; // Host only (no "wss://")
+const int websocketPort = 443; // Port for secure WebSocket (wss)
+const char* websocketPath = "/"; // Path (usually "/" for WebSocket)
 
 WebSocketsClient webSocket;
 
@@ -106,7 +108,7 @@ void setup() {
   configCamera();
 
   // Initialize WebSocket connection
-  webSocket.begin(websocketServer);
+  webSocket.begin(websocketServer, websocketPort, websocketPath);
   webSocket.onEvent(webSocketEvent);
 }
 
