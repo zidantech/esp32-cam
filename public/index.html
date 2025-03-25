@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32-CAM Live Feed</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <img id="liveImage" src="/image" alt="Live Feed">
+  <script>
+    // Refresh the image every 100ms for real-time streaming
+    setInterval(() => {
+      const img = document.getElementById('liveImage');
+      img.src = `/image?t=${new Date().getTime()}`; // Add timestamp to avoid caching
+    }, 100);
+  </script>
+</body>
+</html>

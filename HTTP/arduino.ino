@@ -49,8 +49,9 @@ void configCamera() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  config.frame_size = FRAMESIZE_QVGA;
-  config.jpeg_quality = 9;
+  // Reduce resolution and quality for faster transmission
+  config.frame_size = FRAMESIZE_QVGA; // 320x240
+  config.jpeg_quality = 10; // Lower quality for smaller file size
   config.fb_count = 1;
 
   esp_err_t err = esp_camera_init(&config);
@@ -71,7 +72,7 @@ void sendImageToRender() {
   http.begin(renderUrl);
   http.addHeader("Content-Type", "image/jpeg");
 
-  Serial.println("Sending image to Render...");
+  // Send the image in chunks to reduce memory usage
   int httpResponseCode = http.POST(fb->buf, fb->len);
   if (httpResponseCode > 0) {
     Serial.printf("Image sent to Render, response code: %d\n", httpResponseCode);
@@ -104,5 +105,5 @@ void loop() {
     Serial.println("WiFi disconnected. Reconnecting...");
     WiFi.begin(ssid, password);
   }
-  delay(5000); // Send an image every 5 seconds
+  delay(100); // Reduce delay for higher FPS
 }
