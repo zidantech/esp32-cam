@@ -1,38 +1,55 @@
 const express = require('express');
-const WebSocket = require('ws');
+const bodyParser = require('body-parser');
+const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, 'public')));
+// Middleware to handle raw image data
+app.use(bodyParser.raw({ type: 'image/jpeg', limit: '10mb' }));
 
-// HTTP server for Express
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
+// Serve static files (e.g., HTML, CSS, JS)
+app.use(express.static('public'));
+
+// Endpoint to receive image data from ESP32-CAM
+app.post('/upload', (req, res) => {
+  console.log('Received image data');
+  const imageData = req.body; // Raw image data
+
+  if (!imageData || imageData.length === 0) {
+    console.error('No image data received');
+    return res.status(400).send('No image data received');
+  }
+
+  // Save the image to a file
+  const imagePath = path.join(__dirname, 'public', 'latest.jpg');
+  fs.writeFile(imagePath, imageData, (err) => {
+    if (err) {
+      console.error('Error saving image:', err);
+      return res.status(500).send('Error saving image');
+    }
+    console.log('Image saved successfully');
+    res.status(200).send('Image received and saved');
+  });
 });
 
-// WebSocket server for ESP32-CAM stream
-const wss = new WebSocket.Server({ server, path: '/ws' });
+// Endpoint to serve the latest image to clients
+app.get('/image', (req, res) => {
+  const imagePath = path.join(__dirname, 'public', 'latest.jpg');
+  if (!fs.existsSync(imagePath)) {
+    console.error('Image not found:', imagePath);
+    return res.status(404).send('Image not found');
+  }
+  res.sendFile(imagePath);
+});
 
-let clients = new Set();
+// Serve the HTML page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-wss.on('connection', (ws) => {
-  console.log('New WebSocket client connected');
-  clients.add(ws);
-
-  ws.on('message', (message) => {
-    // Broadcast ESP32-CAM frames to all connected frontend clients
-    clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  });
-
-  ws.on('close', () => {
-    clients.delete(ws);
-    console.log('Client disconnected');
-  });
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
