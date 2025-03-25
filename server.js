@@ -3,14 +3,14 @@ const WebSocket = require('ws');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 443;
+const PORT = process.env.PORT || 3000;
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // HTTP server for Express
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
 
 // WebSocket server for ESP32-CAM stream
